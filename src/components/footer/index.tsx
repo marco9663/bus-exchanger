@@ -1,41 +1,38 @@
+import { IconBus, IconSettings } from "@tabler/icons";
+
+import Link from "next/link";
 import React from "react";
-import {
-    PankodIcon,
-    GithubIcon,
-    TwitterIcon,
-    YoutubeIcon,
-    LinkedinIcon,
-} from "@components/icons";
+import { useRouter } from "next/router";
+
+const buttons = [
+    {
+        icon: <IconBus size={36} />,
+        path: "/",
+    },
+    {
+        icon: <IconSettings size={36} />,
+        path: "/settings",
+    },
+];
 
 export const Footer: React.FC = () => {
+    const router = useRouter();
+    console.log(router.asPath);
     return (
-        <div className="text-center py-5 bg-gray-800">
-            <a
-                href="https://github.com/pankod"
-                target="_blank"
-                className="block mb-3"
-            >
-                <PankodIcon
-                    className="text-white mx-auto"
-                    width="140"
-                    height="28"
-                />
-            </a>
-
-            <ul className="flex justify-center list-none p-0 m-0">
-                <li className="mx-3">
-                    <GithubIcon color="white" width="28" height="29" />
-                </li>
-                <li className="mx-3">
-                    <TwitterIcon color="white" width="28" height="28" />
-                </li>
-                <li className="mx-3">
-                    <YoutubeIcon color="white" width="28" height="29" />
-                </li>
-                <li className="mx-3">
-                    <LinkedinIcon color="white" width="28" height="32" />
-                </li>
-            </ul>
+        <div className="flex justify-evenly items-center bg-blue-200 dark:bg-blue-900 px-4 py-2 h-12">
+            {buttons.map((btn) => (
+                <Link href={btn.path} key={`footer-${btn.path}`}>
+                    <div
+                        className={`${
+                            router.asPath === btn.path
+                                ? "text-zinc-900 dark:text-zinc-100"
+                                : "text-zinc-500 dark:text-zinc-400"
+                        }`}
+                    >
+                        {btn.icon}
+                    </div>
+                </Link>
+            ))}
         </div>
     );
 };

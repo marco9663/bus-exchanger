@@ -1,16 +1,74 @@
-import React from "react";
-import { AppProps } from "next/app";
 import "tailwindcss/tailwind.css";
 import "@styles/global.css";
-import { QueryClient, QueryClientProvider } from "react-query";
-import { Hydrate } from "react-query/hydration";
 
-function MyApp({ Component, pageProps }: AppProps): JSX.Element {
+import {
+    ColorScheme,
+    ColorSchemeProvider,
+    MantineProvider,
+    createEmotionCache,
+} from "@mantine/core";
+import {
+    Hydrate,
+    QueryClient,
+    QueryClientProvider,
+} from "@tanstack/react-query";
+import { useHotkeys, useLocalStorage } from "@mantine/hooks";
+
+import { AppProps } from "next/app";
+import { Layout } from "@components/layout";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useEffect } from "react";
+
+const myCache = createEmotionCache({ key: "mantine", prepend: false });
+
+function MyApp({
+    Component,
+    pageProps,
+}: AppProps<{ dehydratedState: unknown }>): JSX.Element {
+    const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+        key: "mantine-color-scheme",
+        defaultValue: "light",
+        getInitialValueInEffect: true,
+    });
+    useEffect(() => {
+        if (colorScheme == "dark")
+            document.documentElement.classList.add("dark");
+        else document.documentElement.classList.remove("dark");
+    }, [colorScheme]);
+    const toggleColorScheme = (value?: ColorScheme) => {
+        setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
+    };
+    useHotkeys([["mod+J", () => toggleColorScheme()]]);
+
     const queryClient = new QueryClient();
     return (
         <QueryClientProvider client={queryClient}>
+            <ReactQueryDevtools initialIsOpen={false} />
             <Hydrate state={pageProps.dehydratedState}>
-                <Component {...pageProps} />
+                <ColorSchemeProvider
+                    colorScheme={colorScheme}
+                    toggleColorScheme={toggleColorScheme}
+                >
+                    <MantineProvider
+                        withGlobalStyles
+                        withNormalizeCSS
+                        emotionCache={myCache}
+                        theme={{
+                            colorScheme,
+                            breakpoints: {
+                                xs: 640,
+                                sm: 768,
+                                md: 1024,
+                                lg: 1280,
+                                xl: 1536,
+                            },
+                        }}
+                    >
+                        <Layout>
+                            <Component {...pageProps} />
+                        </Layout>
+                    </MantineProvider>
+                </ColorSchemeProvider>
             </Hydrate>
         </QueryClientProvider>
     );
