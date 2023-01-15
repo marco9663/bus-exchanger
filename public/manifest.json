@@ -1,0 +1,16 @@
+{
+  "name": "BUS Exchanger",
+  "short_name": "BUSE",
+  "icons": [
+    {
+      "src": "/icons/icon-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0335fc",
+  "background_color": "#0335fc",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}
