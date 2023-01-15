@@ -2,7 +2,7 @@ import "dayjs/locale/zh-hk";
 import "dayjs/locale/zh-cn";
 import "dayjs/locale/en";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect } from "react";
 import {
     KMBDirection,
     boundMap,
@@ -11,15 +11,13 @@ import {
     getStop,
 } from "@apis/kmb";
 import { useInterval, useToggle } from "@mantine/hooks";
-import { useQueries, useQuery } from "@tanstack/react-query";
 
 import BusStop from "@components/kmb";
-import Error from "next/error";
-import { Loader } from "@mantine/core";
 import Loading from "pages/loading";
 import Page404 from "pages/404";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 
 dayjs.extend(relativeTime);
@@ -58,20 +56,9 @@ const Route: FC = () => {
     } = useQuery({
         queryKey: ["routeETA", route, service_type],
         queryFn: () => getRouteETA({ route, service_type }),
-        // staleTime: 0,
+        cacheTime: 0,
     });
     if (routeStopLoading || routeETA) return <Loading />;
-
-    // const busStopQueries = useQueries({
-    //     queries: routeStopData!.data.map((stop) => {
-    //         return {
-    //             queryKey: ["stop", stop.stop],
-    //             queryFn: () => getStop(stop.stop),
-    //             enabled: !!routeStopData,
-    //         };
-    //     }),
-    // });
-    // busStopQueries.
 
     return (
         <div className="rest-height">
@@ -87,7 +74,8 @@ const Route: FC = () => {
                                 {routeETAData?.data
                                     .filter(
                                         (routeETA) =>
-                                            routeETA.seq === index + 1 &&
+                                            routeETA.seq ===
+                                                parseInt(stop.seq) &&
                                             direction ===
                                                 boundMap(routeETA.dir),
                                     )

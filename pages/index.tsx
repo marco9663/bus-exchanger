@@ -1,8 +1,7 @@
-import { Badge, Center, Loader } from "@mantine/core";
 import { INBOUND, OUTBOUND, getRouteList } from "@apis/kmb";
 import React, { useState } from "react";
 
-import { IconArrowBadgeRight } from "@tabler/icons";
+import { Badge } from "@mantine/core";
 import Link from "next/link";
 import Loading from "./loading";
 import { useQuery } from "@tanstack/react-query";
@@ -48,8 +47,7 @@ const Home: React.FC = () => {
                                     </div>
 
                                     <div className="flex">
-                                        {/* <div className="w-44">{route.orig_tc}</div> */}
-                                        {/* <IconArrowBadgeRight /> */}往
+                                        往
                                         <div className="font-bold pl-2">
                                             {route.dest_tc}
                                         </div>

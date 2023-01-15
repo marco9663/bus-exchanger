@@ -1,8 +1,8 @@
 import { FC, Fragment } from "react";
-import { KMBDirection, getRouteStop, getStop } from "@apis/kmb";
-import { useQueries, useQuery } from "@tanstack/react-query";
 
 import Loading from "pages/loading";
+import { getStop } from "@apis/kmb";
+import { useQuery } from "@tanstack/react-query";
 
 export type BusStopProps = {
     stop_id: string;
