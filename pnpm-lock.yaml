@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@emotion/react': ^11.10.5
+  '@hookform/resolvers': ^2.9.10
   '@mantine/core': ^5.10.0
   '@mantine/hooks': ^5.10.0
   '@svgr/cli': ^5.5.0
@@ -12,10 +13,13 @@ specifiers:
   '@types/node': ^14.18.36
   '@types/react': ^17.0.52
   '@types/react-dom': ^17.0.18
+  '@types/uuid': ^9.0.0
   '@typescript-eslint/eslint-plugin': ^4.33.0
   '@typescript-eslint/parser': ^4.33.0
   autoprefixer: ^10.4.13
   dayjs: ^1.11.7
+  dexie: ^3.2.2
+  dexie-react-hooks: ^1.1.1
   dotenv: ^8.6.0
   eslint: ^7.32.0
   eslint-config-prettier: ^7.2.0
@@ -32,14 +36,18 @@ specifiers:
   prettier: ^2.8.3
   react: 18.2.0
   react-dom: 18.2.0
+  react-hook-form: ^7.42.1
   react-use: ^15.3.8
   tailwindcss: ^3.2.4
   ts-jest: ^26.5.6
   typescript: ^4.9.4
+  uuid: ^9.0.0
+  zod: ^3.20.2
   zustand: ^3.7.2
 
 dependencies:
   '@emotion/react': 11.10.5_dsvndo4wjx7umk5x4kyqypffly
+  '@hookform/resolvers': 2.9.10_react-hook-form@7.42.1
   '@mantine/core': 5.10.0_s67aozcluxv5rdmjnwgiaxmmxq
   '@mantine/hooks': 5.10.0_react@18.2.0
   '@tabler/icons': 1.119.0_biqbaboplfbrettd7655fr4n2y
@@ -47,6 +55,8 @@ dependencies:
   '@tanstack/react-query': 4.22.0_biqbaboplfbrettd7655fr4n2y
   '@tanstack/react-query-devtools': 4.22.0_gp275tdwez2a4eujt75dnnp754
   dayjs: 1.11.7
+  dexie: 3.2.2
+  dexie-react-hooks: 1.1.1_suogffzfogvfekbdtzzi7udgf4
   next: 13.1.2_biqbaboplfbrettd7655fr4n2y
   next-compose-plugins: 2.2.1
   next-pwa: 5.6.0_next@13.1.2
@@ -54,7 +64,10 @@ dependencies:
   prettier: 2.8.3
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
+  react-hook-form: 7.42.1_react@18.2.0
   react-use: 15.3.8_biqbaboplfbrettd7655fr4n2y
+  uuid: 9.0.0
+  zod: 3.20.2
   zustand: 3.7.2_react@18.2.0
 
 devDependencies:
@@ -62,6 +75,7 @@ devDependencies:
   '@types/node': 14.18.36
   '@types/react': 17.0.52
   '@types/react-dom': 17.0.18
+  '@types/uuid': 9.0.0
   '@typescript-eslint/eslint-plugin': 4.33.0_thyv6urrmcfyirt6hwk42bhgva
   '@typescript-eslint/parser': 4.33.0_yfqovispp7u7jaktymfaqwl2py
   autoprefixer: 10.4.13_postcss@8.4.21
@@ -1402,6 +1416,14 @@ packages:
       react-dom: 18.2.0_react@18.2.0
     dev: false
 
+  /@hookform/resolvers/2.9.10_react-hook-form@7.42.1:
+    resolution: {integrity: sha512-JIL1DgJIlH9yuxcNGtyhsWX/PgNltz+5Gr6+8SX9fhXc/hPbEIk6wPI82nhgvp3uUb6ZfAM5mqg/x7KR7NAb+A==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
+    dependencies:
+      react-hook-form: 7.42.1_react@18.2.0
+    dev: false
+
   /@humanwhocodes/config-array/0.5.0:
     resolution: {integrity: sha512-FagtKFz74XrTl7y6HCzQpwDfXP0yhxe9lHLD1UZxjvZIcbyRz8zTFF/yYNfSfzU414eDwZ1SrO0Qvtyf+wFMQg==}
     engines: {node: '>=10.10.0'}
@@ -2359,6 +2381,10 @@ packages:
   /@types/trusted-types/2.0.2:
     resolution: {integrity: sha512-F5DIZ36YVLE+PN+Zwws4kJogq47hNgX3Nx6WyDJ3kcplxyke3XIzB8uK5n/Lpm1HBsbGzd6nmGehL8cPekP+Tg==}
     dev: false
+
+  /@types/uuid/9.0.0:
+    resolution: {integrity: sha512-kr90f+ERiQtKWMz5rP32ltJ/BtULDI5RVO0uavn1HQUOwjx0R1h0rnDYNL0CepF1zL5bSY6FISAfd9tOdDhU5Q==}
+    dev: true
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -3410,6 +3436,23 @@ packages:
       acorn-node: 1.8.2
       defined: 1.0.1
       minimist: 1.2.7
+
+  /dexie-react-hooks/1.1.1_suogffzfogvfekbdtzzi7udgf4:
+    resolution: {integrity: sha512-Cam5JP6PxHN564RvWEoe8cqLhosW0O4CAZ9XEVYeGHJBa6KEJlOpd9CUpV3kmU9dm2MrW97/lk7qkf1xpij7gA==}
+    peerDependencies:
+      '@types/react': '>=16'
+      dexie: '>=3.1.0-alpha.1 <5.0.0'
+      react: '>=16'
+    dependencies:
+      '@types/react': 17.0.52
+      dexie: 3.2.2
+      react: 18.2.0
+    dev: false
+
+  /dexie/3.2.2:
+    resolution: {integrity: sha512-q5dC3HPmir2DERlX+toCBbHQXW5MsyrFqPFcovkH9N2S/UW/H3H5AWAB6iEOExeraAu+j+zRDG+zg/D7YhH0qg==}
+    engines: {node: '>=6.0'}
+    dev: false
 
   /didyoumean/1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
@@ -6166,6 +6209,15 @@ packages:
       scheduler: 0.23.0
     dev: false
 
+  /react-hook-form/7.42.1_react@18.2.0:
+    resolution: {integrity: sha512-2UIGqwMZksd5HS55crTT1ATLTr0rAI4jS7yVuqTaoRVDhY2Qc4IyjskCmpnmdYqUNOYFy04vW253tb2JRVh+IQ==}
+    engines: {node: '>=12.22.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18
+    dependencies:
+      react: 18.2.0
+    dev: false
+
   /react-is/16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
     dev: false
@@ -7452,6 +7504,11 @@ packages:
     dev: true
     optional: true
 
+  /uuid/9.0.0:
+    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
+    hasBin: true
+    dev: false
+
   /v8-compile-cache/2.3.0:
     resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}
     dev: true
@@ -7847,6 +7904,10 @@ packages:
       y18n: 4.0.3
       yargs-parser: 18.1.3
     dev: true
+
+  /zod/3.20.2:
+    resolution: {integrity: sha512-1MzNQdAvO+54H+EaK5YpyEy0T+Ejo/7YLHS93G3RnYWh5gaotGHwGeN/ZO687qEDU2y4CdStQYXVHIgrUl5UVQ==}
+    dev: false
 
   /zustand/3.7.2_react@18.2.0:
     resolution: {integrity: sha512-PIJDIZKtokhof+9+60cpockVOq05sJzHCriyvaLBmEJixseQ1a5Kdov6fWZfWOu5SK9c+FhH1jU0tntLxRJYMA==}

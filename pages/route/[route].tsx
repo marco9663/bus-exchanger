@@ -12,7 +12,7 @@ import {
 } from "@apis/kmb";
 import { useInterval, useToggle } from "@mantine/hooks";
 
-import BusStop from "@components/kmb";
+import { BusStop } from "@components/kmb";
 import Loading from "pages/loading";
 import Page404 from "pages/404";
 import dayjs from "dayjs";
@@ -66,33 +66,38 @@ const Route: FC = () => {
                 {route}
             </div>
             <div className="flex flex-col gap-2 overflow-y-auto h-[calc(100vh-3rem-3rem)] divide-y divide-zinc-300">
-                {routeStopData?.data.map((stop, index) => {
+                {routeStopData?.data.map((stop) => {
+                    const filteredETA = routeETAData?.data.filter(
+                        (routeETA) =>
+                            routeETA.seq === parseInt(stop.seq) &&
+                            direction === boundMap(routeETA.dir) &&
+                            routeETA.eta,
+                    );
                     return (
                         <div className="flex justify-between items-center px-2">
                             <BusStop stop_id={stop.stop} />
                             <div>
-                                {routeETAData?.data
-                                    .filter(
-                                        (routeETA) =>
-                                            routeETA.seq ===
-                                                parseInt(stop.seq) &&
-                                            direction ===
-                                                boundMap(routeETA.dir),
-                                    )
-                                    .map((routeETA) => {
+                                {filteredETA && filteredETA.length > 0 ? (
+                                    filteredETA.map((routeETA, index) => {
                                         const eta = dayjs(routeETA.eta);
                                         return (
-                                            <div>
+                                            <div
+                                                className={`${
+                                                    index === 0
+                                                        ? "text-lg font-semibold"
+                                                        : "text-sm"
+                                                } text-right`}
+                                            >
                                                 {eta.isAfter(new Date()) &&
                                                     eta.fromNow(true) + "後"}
                                             </div>
                                         );
-                                    })}
-                                {/* .map((routeETA) => (
-                                        <div>
-                                            {dayjs(routeETA.eta).fromNow(true)}
-                                        </div>
-                                    ))} */}
+                                    })
+                                ) : (
+                                    <div className="text-zinc-700">
+                                        沒有班次
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
