@@ -6,45 +6,33 @@ import Link from "next/link";
 import Loading from "./loading";
 import { useCounter, useDebouncedValue, useIntersection } from "@mantine/hooks";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { db } from "../db";
+import { db, KMBRouteTable } from "../db";
+
+const getLink = (route: KMBRouteTable) =>
+    `/route/${route.route}?direction=${
+        route.bound == "I" ? INBOUND : OUTBOUND
+    }&service_type=${route.service_type}`;
 
 const Home: React.FC = () => {
     const [filter, setFilter] = useState("");
-    const [debounced] = useDebouncedValue(filter, 500);
-    const containerRef = useRef(null);
-    const { ref, entry } = useIntersection({
-        root: containerRef.current,
-        threshold: 1,
-    });
-    const { isLoading, data, fetchNextPage } = useInfiniteQuery({
-        queryKey: ["DBGetRouteList"],
-        queryFn: async ({ pageParam = 20 }) => {
+    const [debounced] = useDebouncedValue(filter, 200);
+    const { isLoading, data } = useQuery({
+        queryKey: ["DBGetRouteList", debounced],
+        queryFn: async () => {
+            console.log("start");
             if (debounced) {
                 const data = await db.kmbRouteTable
                     .where("route")
                     .startsWith(debounced)
-                    .limit(20)
-                    .offset(pageParam)
                     .toArray();
                 return data;
             } else {
-                const data = await db.kmbRouteTable
-                    .limit(20)
-                    .offset(pageParam)
-                    .toArray();
-                console.log(data);
+                const data = await db.kmbRouteTable.offset(20).limit(20).toArray();
+                // console.log(data);
                 return data;
             }
         },
-        getNextPageParam: (lastPage, allPages) => {
-            return allPages.length * 20 + 20;
-        },
     });
-    useEffect(() => {
-        if (entry && entry.isIntersecting) {
-            fetchNextPage().then(() => {});
-        }
-    }, [entry]);
     if (isLoading) return <Loading />;
     return (
         <div className="rest-height">
@@ -61,41 +49,28 @@ const Home: React.FC = () => {
                     }
                 />
             </div>
-            <div
-                ref={containerRef}
-                className="h-[calc(100vh-3rem-6rem)] overflow-y-auto flex flex-col gap-2 divide-y divide-slate-400 dark:divide-slate-700"
-            >
+            <div className="h-[calc(100vh-3rem-6rem)] overflow-y-auto flex flex-col gap-2 divide-y divide-slate-400 dark:divide-slate-700">
                 {data &&
-                    data.pages.map((page, pageNum) =>
-                        page.map((route, itemNum) => (
-                            <Link
-                                ref={
-                                    pageNum === data.pages.length + 1 &&
-                                    page.length - itemNum < 8
-                                        ? ref
-                                        : null
-                                }
-                                href={`/route/${route.route}?direction=${
-                                    route.bound == "I" ? INBOUND : OUTBOUND
-                                }&service_type=${route.service_type}`}
-                                key={`${route.route}-${route.dest_en}-${route.service_type}`}
-                            >
-                                <div className="flex items-center px-4 py-2 flex-wrap">
-                                    <div className="font-bold w-16">
-                                        {route.route}
-                                    </div>
-
-                                    <div className="flex">
-                                        往
-                                        <div className="font-bold pl-2">
-                                            {route.dest_tc}
-                                        </div>
-                                    </div>
-                                    <Badge>{route.service_type}</Badge>
+                    data.map((route) => (
+                        <Link
+                            href={getLink(route)}
+                            key={`${route.route}-${route.dest_en}-${route.service_type}`}
+                        >
+                            <div className="flex items-center px-4 py-2 flex-wrap">
+                                <div className="font-bold w-16">
+                                    {route.route}
                                 </div>
-                            </Link>
-                        )),
-                    )}
+
+                                <div className="flex">
+                                    往
+                                    <div className="font-bold pl-2">
+                                        {route.dest_tc}
+                                    </div>
+                                </div>
+                                <Badge>{route.service_type}</Badge>
+                            </div>
+                        </Link>
+                    ))}
             </div>
         </div>
     );

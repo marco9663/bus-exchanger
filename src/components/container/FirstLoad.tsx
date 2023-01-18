@@ -2,6 +2,7 @@ import { FC, Fragment, ReactNode } from "react";
 import { getRouteList } from "@apis";
 import { db } from "../../../db";
 import { useQuery } from "@tanstack/react-query";
+import Loading from "../../../pages/loading";
 
 export const FirstLoad: FC<{ children: ReactNode }> = ({ children }) => {
     const { isLoading, error } = useQuery(["initialAllRoute"], async () => {
@@ -14,5 +15,6 @@ export const FirstLoad: FC<{ children: ReactNode }> = ({ children }) => {
         }
         return null;
     });
+    if (isLoading) return <Loading />;
     return <Fragment>{children}</Fragment>;
 };
