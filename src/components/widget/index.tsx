@@ -5,18 +5,15 @@ import {
     Select,
     SelectItemProps,
 } from "@mantine/core";
-import { Control, useController, useFormContext } from "react-hook-form";
-import { FC, Fragment, forwardRef, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import { FC, forwardRef, Fragment, useState } from "react";
 import {
-    KBMBoundType,
-    KMBDirection,
-    KMBRouteType,
     boundMap,
     getRouteList,
-    getRouteStop,
     getRouteStopWithName,
-    getStop,
     getStopETA,
+    KMBDirection,
+    KMBRouteType,
     toBound,
 } from "@apis/kmb";
 

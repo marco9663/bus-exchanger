@@ -1,11 +1,11 @@
-import { INBOUND, OUTBOUND, getRouteList } from "@apis/kmb";
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import { INBOUND, OUTBOUND } from "@apis/kmb";
+import React, { Fragment, useRef, useState } from "react";
 
-import { Badge, Loader } from "@mantine/core";
+import { Badge } from "@mantine/core";
 import Link from "next/link";
 import Loading from "./loading";
-import { useCounter, useDebouncedValue, useIntersection } from "@mantine/hooks";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useDebouncedValue } from "@mantine/hooks";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { db, KMBRouteTable } from "../db";
 import InfiniteLoader from "react-window-infinite-loader";
 import { FixedSizeList } from "react-window";

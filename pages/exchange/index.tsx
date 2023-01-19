@@ -1,12 +1,11 @@
 import { BusStop, Route } from "@components/kmb";
 import { FC, useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { INBOUND, KMBDirection, OUTBOUND } from "@apis/kmb";
+import { INBOUND, OUTBOUND } from "@apis/kmb";
 
 import { ActionIcon } from "@mantine/core";
 import ExchangeWidget from "@components/widget";
 import { IconPlus } from "@tabler/icons";
-import RouteSelect from "@components/select";
 import { useRouter } from "next/router";
 import { z } from "zod";
 
