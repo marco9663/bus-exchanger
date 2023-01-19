@@ -1,4 +1,4 @@
-import { IconBus, IconSettings } from "@tabler/icons";
+import { IconArrowsExchange2, IconBus, IconSettings } from "@tabler/icons";
 
 import Link from "next/link";
 import React from "react";
@@ -9,6 +9,10 @@ const buttons = [
         icon: <IconBus size={36} />,
         path: "/",
     },
+    // {
+    //     icon: <IconArrowsExchange2 size={36} />,
+    //     path: "/exchange",
+    // },
     {
         icon: <IconSettings size={36} />,
         path: "/settings",

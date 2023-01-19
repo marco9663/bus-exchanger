@@ -1,5 +1,5 @@
 import { KMB_API_BASE_URL } from "./constants";
-
+export * from "./helper";
 export type KMBApiBaseType = {
     options?: RequestInit;
 };
@@ -15,6 +15,11 @@ export const I = "I";
 export type KBMBoundType = typeof O | typeof I;
 export const INBOUND = "inbound";
 export const OUTBOUND = "outbound";
+export const toBound: Record<KBMBoundType, typeof INBOUND | typeof OUTBOUND> = {
+    O: OUTBOUND,
+    I: INBOUND,
+};
+
 export const boundMap = (
     bound: KBMBoundType | typeof INBOUND | typeof OUTBOUND,
 ): KBMBoundType | typeof INBOUND | typeof OUTBOUND => {
@@ -29,7 +34,7 @@ export const boundMap = (
 };
 export type KMBDirection = typeof INBOUND | typeof OUTBOUND;
 
-export type KMBRouteListType = {
+export type KMBRouteType = {
     route: string;
     bound: KBMBoundType;
     service_type: string;
@@ -50,7 +55,7 @@ export type KMBRouteStop = {
 };
 
 export type KMBGetRouteListResponseType = KMBApiBaseResponseType & {
-    data: KMBRouteListType[];
+    data: KMBRouteType[];
 };
 
 const defaultOptions: RequestInit = {
@@ -152,6 +157,53 @@ export const getRouteETA = async ({
 }: KMBGetRouteETAParamType): Promise<KMBGetRouteETAResponseType> => {
     const res = await fetch(
         `${KMB_API_BASE_URL}v1/transport/kmb/route-eta/${route}/${service_type}`,
+        defaultOptions,
+    );
+    return await res.json();
+};
+
+export type KMBStopETA = {
+    co: "KMB";
+    route: string;
+    dir: KBMBoundType;
+    service_type: number;
+    seq: number;
+    dest_tc: string;
+    dest_sc: string;
+    dest_en: string;
+    eta_seq: number;
+    eta: string | null;
+    rmk_tc: string; //"最後班次已過";
+    rmk_sc: string; //"最后班次已过";
+    rmk_en: string; //"The final bus has departed from this stop";
+    data_timestamp: string; //"2023-01-16T23:54:37+08:00";
+};
+
+export type KMBgetStopETAResponseType = KMBApiBaseResponseType & {
+    data: KMBStopETA[];
+};
+
+export const getStopETA = async (
+    stop_id: string,
+): Promise<KMBgetStopETAResponseType> => {
+    const res = await fetch(
+        `${KMB_API_BASE_URL}v1/transport/kmb/stop-eta/${stop_id}`,
+        defaultOptions,
+    );
+    return await res.json();
+};
+
+export type KMBGetRouteParamType = KMBGetRouteStopParamType;
+export type KMBGetRouteResponseType = KMBApiBaseResponseType & {
+    data: KMBRouteType;
+};
+export const getRoute = async ({
+    direction,
+    route,
+    service_type,
+}: KMBGetRouteParamType): Promise<KMBGetRouteResponseType> => {
+    const res = await fetch(
+        `${KMB_API_BASE_URL}v1/transport/kmb/route/${route}/${direction}/${service_type}`,
         defaultOptions,
     );
     return await res.json();

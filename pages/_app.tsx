@@ -11,13 +11,17 @@ import {
     Hydrate,
     QueryClient,
     QueryClientProvider,
+    useQuery,
 } from "@tanstack/react-query";
-import { useHotkeys, useLocalStorage } from "@mantine/hooks";
+import { useCounter, useHotkeys, useLocalStorage } from "@mantine/hooks";
 
 import { AppProps } from "next/app";
 import { Layout } from "@components/layout";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect } from "react";
+import { getRouteList } from "@apis";
+import { db } from "../db";
+import { FirstLoad } from "@components/container/FirstLoad";
 
 const myCache = createEmotionCache({ key: "mantine", prepend: false });
 
@@ -25,6 +29,8 @@ function MyApp({
     Component,
     pageProps,
 }: AppProps<{ dehydratedState: unknown }>): JSX.Element {
+    const queryClient = new QueryClient();
+
     const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
         key: "mantine-color-scheme",
         defaultValue: "light",
@@ -40,36 +46,37 @@ function MyApp({
     };
     useHotkeys([["mod+J", () => toggleColorScheme()]]);
 
-    const queryClient = new QueryClient();
     return (
         <QueryClientProvider client={queryClient}>
-            <ReactQueryDevtools initialIsOpen={false} />
-            <Hydrate state={pageProps.dehydratedState}>
-                <ColorSchemeProvider
-                    colorScheme={colorScheme}
-                    toggleColorScheme={toggleColorScheme}
-                >
-                    <MantineProvider
-                        withGlobalStyles
-                        withNormalizeCSS
-                        emotionCache={myCache}
-                        theme={{
-                            colorScheme,
-                            breakpoints: {
-                                xs: 640,
-                                sm: 768,
-                                md: 1024,
-                                lg: 1280,
-                                xl: 1536,
-                            },
-                        }}
+            <FirstLoad>
+                <ReactQueryDevtools initialIsOpen={false} />
+                <Hydrate state={pageProps.dehydratedState}>
+                    <ColorSchemeProvider
+                        colorScheme={colorScheme}
+                        toggleColorScheme={toggleColorScheme}
                     >
-                        <Layout>
-                            <Component {...pageProps} />
-                        </Layout>
-                    </MantineProvider>
-                </ColorSchemeProvider>
-            </Hydrate>
+                        <MantineProvider
+                            withGlobalStyles
+                            withNormalizeCSS
+                            emotionCache={myCache}
+                            theme={{
+                                colorScheme,
+                                breakpoints: {
+                                    xs: 640,
+                                    sm: 768,
+                                    md: 1024,
+                                    lg: 1280,
+                                    xl: 1536,
+                                },
+                            }}
+                        >
+                            <Layout>
+                                <Component {...pageProps} />
+                            </Layout>
+                        </MantineProvider>
+                    </ColorSchemeProvider>
+                </Hydrate>
+            </FirstLoad>
         </QueryClientProvider>
     );
 }
