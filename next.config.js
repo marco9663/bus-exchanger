@@ -15,6 +15,9 @@ const nextConfig = withPWA(
         images: {
             domains: ["lh3.googleusercontent.com", "i.imgur.com"],
         },
+        eslint: {
+            ignoreDuringBuilds: true,
+        },
     }),
 );
 

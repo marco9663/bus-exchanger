@@ -8,7 +8,7 @@
         "start": "next start",
         "svgr": "npx @svgr/cli -d src/components/icons --ignore-existing --icon --typescript public/icons",
         "lint": "eslint '**/*.{js,jsx,ts,tsx}'",
-        "prettier": "prettier --write '**/*.{js,jsx,ts,tsx}'",
+        "prettier": "prettier --write \"**/*.{ts,tsx}\"",
         "test": "jest -c test/jest.config.js"
     },
     "dependencies": {
