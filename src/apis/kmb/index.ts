@@ -1,4 +1,5 @@
 import { KMB_API_BASE_URL } from "./constants";
+import { db } from "../../../db";
 export * from "./helper";
 export type KMBApiBaseType = {
     options?: RequestInit;

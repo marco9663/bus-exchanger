@@ -20,8 +20,9 @@ import {
 import { IconPencil } from "@tabler/icons";
 import { QueryJSON } from "pages/exchange";
 import { useQuery } from "@tanstack/react-query";
-import { useToggle } from "@mantine/hooks";
+import { useDebouncedValue, useToggle } from "@mantine/hooks";
 import { v4 as uuidv4 } from "uuid";
+import { db, KMBRouteTable } from "../../../db";
 
 export type ExchangeWidgetProps = {
     // control: Control<{
@@ -53,8 +54,9 @@ const ExchangeWidget: FC<ExchangeWidgetProps> = ({ index }) => {
     const [opened, toggle] = useToggle([false, true]);
     const [stop, setStop] = useState<string | null>(null);
     const [route, setRoute] = useState<Route | null>(null);
-    const [routes, setRoutes] = useState<Route[]>([]);
     const [exchange, setExchange] = useState<Route[]>([]);
+    const [searchValue, onSearchChange] = useState("");
+    const [dSearchValue] = useDebouncedValue(searchValue, 300);
 
     const handleSave = () => {
         if (route && stop) {
@@ -62,33 +64,34 @@ const ExchangeWidget: FC<ExchangeWidgetProps> = ({ index }) => {
             setValue(`data.${index}.service_type`, route?.service_type);
             setValue(`data.${index}.direction`, toBound[route?.bound]);
             setValue(`data.${index}.exchange_stop_id`, stop);
+            setValue(`data.${index}.route_id`, route.value);
         } else {
             console.log("Please select");
         }
         toggle();
     };
 
-    const _ = useQuery({
-        queryKey: ["getRouteList"],
-        queryFn: getRouteList,
-        onSuccess(data) {
-            setRoutes(
-                data.data.map((routeData) => ({
-                    value: uuidv4(),
-                    ...routeData,
-                    label: `${routeData.route} 住${routeData.dest_tc} (${routeData.service_type})`,
-                })),
-            );
-            data.data.find(
-                (r) =>
-                    r.route === getValues(`data.${index}.route`) &&
-                    r.service_type ===
-                        getValues(`data.${index}.service_type`) &&
-                    toBound[r.bound] === getValues(`data.${index}.direction`),
-            );
+    const { data: routes = [] } = useQuery({
+        queryKey: ["DBGetRouteList", dSearchValue],
+        queryFn: async () => {
+            let data: KMBRouteTable[] = [];
+            if (dSearchValue) {
+                data = await db.kmbRouteTable
+                    .where("route")
+                    .startsWith(dSearchValue)
+                    .toArray();
+            } else {
+                data = await db.kmbRouteTable.toArray();
+            }
+            const res: Route[] = data.map((r) => ({
+                ...r,
+                label: `${r.route} 住${r.dest_tc} ${r.service_type}`,
+                value: r.id!.toString(),
+            }));
+            return res;
         },
     });
-    const { data: stopData, refetch: refetchStops } = useQuery({
+    const { data: stopData } = useQuery({
         queryKey: route
             ? [
                   "getRouteStopWithName",
@@ -162,9 +165,8 @@ const ExchangeWidget: FC<ExchangeWidgetProps> = ({ index }) => {
                     value={route?.value}
                     onChange={handleRouteChange}
                     clearable
-                    filter={(value, item) =>
-                        item.route.toUpperCase().startsWith(value.toUpperCase())
-                    }
+                    searchValue={searchValue}
+                    onSearchChange={(v) => onSearchChange(v.toUpperCase())}
                 />
 
                 <Select

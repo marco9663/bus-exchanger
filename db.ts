@@ -1,5 +1,5 @@
 import Dexie, { Table } from "dexie";
-import { KMBRouteStop, KMBRouteType } from "@apis";
+import { KMBRouteStop, KMBRouteType, KMBStop } from "@apis";
 
 export interface KMBRouteTable extends KMBRouteType {
     id?: number;
@@ -20,12 +20,15 @@ export interface Hash {
     value: string;
 }
 
+export interface KMBStopTable extends KMBStop {}
+
 export class MySubClassedDexie extends Dexie {
     // 'friends' is added by dexie when declaring the stores()
     // We just tell the typing system this is the case
     kmbRouteTable!: Table<KMBRouteTable>;
     kmbRouteStopTable!: Table<KMBRouteStopTable>;
     hash!: Table<Hash>;
+    kmbStopTable!: Table<KMBStopTable>;
     constructor() {
         super("myDatabase");
         this.version(1).stores({
@@ -33,6 +36,7 @@ export class MySubClassedDexie extends Dexie {
                 "++id, route, orig_en, orig_tc, dest_en, dest_sc, [route+bound+service_type]",
             // kmbRouteStopTable: "++id, route, stop , [route+bound+service_type]"
             hash: "id",
+            kmbStopTable: "stop, name_tc, name_en",
         });
     }
 }
