@@ -7,8 +7,8 @@ node_modules
 .env.*
 !.env.example!
 
-#public/sw**
-#public/workbox**
+public/sw**
+public/workbox**
 
 ### NextJS ###
 # Next build dir
