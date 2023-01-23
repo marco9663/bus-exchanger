@@ -1,13 +1,29 @@
 import { BusStop, Route } from "@components/kmb";
-import { FC, useEffect } from "react";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import {
+    Context,
+    createContext,
+    FC,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { INBOUND, OUTBOUND } from "@apis/kmb";
 
 import { ActionIcon } from "@mantine/core";
 import ExchangeWidget from "@components/widget";
-import { IconChevronDown, IconPlus } from "@tabler/icons";
+import {
+    IconChevronDown,
+    IconPencil,
+    IconPlus,
+    IconTrashX,
+} from "@tabler/icons";
 import { useRouter } from "next/router";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import { useId, useListState, UseListStateHandlers } from "@mantine/hooks";
+import { FirstRouteWidget } from "@components/widget/exchange/FirstRouteWidget";
+import { ExchangeRouteWidget } from "@components/widget/exchange/ExchangeRouteWidget";
 
 // type QueryJSON = {
 //     route: string;
@@ -34,123 +50,148 @@ const QueryJSONSchema = z.array(
 );
 export type QueryJSON = z.infer<typeof QueryJSONSchema>;
 
-const defaultForm: Record<string, QueryJSON> = {
-    data: [
-        {
-            route_id: "",
-            route: "",
-            direction: INBOUND,
-            service_type: "",
-            exchange_stop_id: "",
-        },
-    ],
+export interface ExchangeContextType {
+    exchanges: QueryJSON;
+    handlers: UseListStateHandlers<QueryJSON[0]>;
+}
+
+const ExchangeContext = createContext<ExchangeContextType>(
+    {} as ExchangeContextType,
+);
+
+export const useExchange = (): ExchangeContextType => {
+    return useContext(ExchangeContext);
 };
 
-type ExchangeState = QueryJSON[]
+const defaultExchange: QueryJSON = [
+    {
+        route_id: "",
+        route: "",
+        direction: INBOUND,
+        service_type: "",
+        exchange_stop_id: "",
+    },
+];
 
-const getRawExchange = (json?: string): QueryJSON[] =>
-    json ? JSON.parse(decodeURIComponent(json || "")) : [];
+const getRawExchange = (json?: string): QueryJSON | null =>
+    json ? JSON.parse(decodeURIComponent(json || "")) : null;
 
 const Exchange: FC = () => {
     const router = useRouter();
     const { json } = router.query as QueryParam;
-    const rawExchange = getRawExchange(json)
-
-    useEffect(() => {
-        QueryJSONSchema.safeParse(rawExchange);
-    }, [rawExchange]);
-
-    const methods = useForm<{
-        data: QueryJSON;
-    }>({
-        defaultValues: QueryJSONSchema.safeParse(rawExchange).success
-            ? { data: rawExchange as unknown as QueryJSON }
-            : defaultForm,
+    const [exchanges, handlers] = useListState<QueryJSON[0]>([]);
+    const _ = useQuery({
+        queryKey: ["getRawExchange"],
+        queryFn: () => {
+            const rawExchange = getRawExchange(json);
+            if (!QueryJSONSchema.safeParse(rawExchange).success) {
+                handlers.append(defaultExchange[0]);
+                return null;
+            }
+            handlers.append((rawExchange as QueryJSON)[0]);
+            return null;
+        },
+        refetchOnWindowFocus: false,
     });
-    const { control, handleSubmit, reset, watch } = methods;
 
-    const onSubmit = (data: { data: QueryJSON }) => {
-        console.log(data);
-    };
-
-    const { fields, append } = useFieldArray({ control, name: "data" });
+    const memoedValue = useMemo(
+        () => ({
+            exchanges,
+            handlers,
+        }),
+        [exchanges, handlers],
+    );
 
     return (
-        <FormProvider {...methods}>
+        <ExchangeContext.Provider value={memoedValue}>
             <div className="rest-height">
                 <div className="flex justify-center items-center font-bold text-xl h-12 bg-blue-300 dark:bg-blue-600">
                     Exchange
                 </div>
-                <form id="hook-form" onSubmit={handleSubmit(onSubmit)}>
-                    <div className="flex justify-center items-center py-4 flex-col gap-4">
-                        {fields.map(
-                            (
-                                {
-                                    id,
-                                    direction,
-                                    route,
-                                    service_type,
-                                    exchange_stop_id,
-                                },
-                                index,
-                            ) => {
-                                return (
-                                    <div key={`${id}`}>
-                                        <div className="bg-slate-800 p-4 rounded-lg w-72 h-20 flex justify-between">
-                                            <Route
-                                                direction={watch(
-                                                    `data.${index}.direction`,
-                                                )}
-                                                route={watch(
-                                                    `data.${index}.route`,
-                                                )}
-                                                service_type={watch(
-                                                    `data.${index}.service_type`,
-                                                )}
-                                            />
-                                            <ExchangeWidget index={index} />
-                                        </div>
-                                        {watch(
-                                            `data.${index}.exchange_stop_id`,
-                                        ) && (
-                                            <div className="flex flex-col justify-center items-center">
-                                                <IconChevronDown />
-                                                <BusStop
-                                                    stop_id={
-                                                        watch(
-                                                            `data.${index}.exchange_stop_id`,
-                                                        ) as string
-                                                    }
-                                                />
-                                                {index !==
-                                                    fields.length - 1 && (
-                                                    <IconChevronDown />
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {fields.length === index + 1 && (
-                                            <div className="flex justify-center mt-2">
-                                                <ActionIcon
-                                                    onClick={() =>
-                                                        append(defaultForm.data)
-                                                    }
-                                                >
-                                                    <IconPlus />
-                                                </ActionIcon>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
+                <div className="flex justify-center items-center py-4 flex-col gap-4">
+                    {exchanges.map(
+                        (
+                            {
+                                route_id,
+                                direction,
+                                route,
+                                service_type,
+                                exchange_stop_id,
                             },
-                        )}
-                    </div>
-                    <button type="submit" form="hook-form">
-                        Calculate
-                    </button>
-                </form>
+                            index,
+                        ) => {
+                            return (
+                                <div key={useId(route_id)}>
+                                    <div className="bg-slate-800 p-4 rounded-lg w-72 h-20 flex justify-between">
+                                        <Route
+                                            direction={
+                                                exchanges[index].direction
+                                            }
+                                            route={exchanges[index].route}
+                                            service_type={
+                                                exchanges[index].service_type
+                                            }
+                                        />
+                                        <div className='flex'>
+                                            {index === 0 ? (
+                                                <FirstRouteWidget
+                                                    index={index}
+                                                />
+                                            ) : (
+                                                <ExchangeRouteWidget
+                                                    index={index}
+                                                />
+                                            )}
+                                            <ActionIcon
+                                                onClick={() =>
+                                                    handlers.remove(index)
+                                                }
+                                            >
+                                                <IconTrashX color="#FF1517"/>
+                                            </ActionIcon>
+                                        </div>
+                                    </div>
+                                    {exchanges[index].exchange_stop_id && (
+                                        <div className="flex flex-col justify-center items-center">
+                                            <IconChevronDown />
+                                            <BusStop
+                                                stop_id={exchanges[
+                                                    index
+                                                ].exchange_stop_id!.toString()}
+                                            />
+                                            {index !== exchanges.length - 1 && (
+                                                <IconChevronDown />
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {exchanges.length === index + 1 && (
+                                        <div className="flex justify-center mt-2">
+                                            <ActionIcon
+                                                onClick={() => {
+                                                    handlers.append(
+                                                        defaultExchange[0],
+                                                    );
+                                                }}
+                                            >
+                                                <IconPlus />
+                                            </ActionIcon>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        },
+                    )}
+                </div>
+                <button
+                    onClick={() => {
+                        console.log(exchanges);
+                    }}
+                >
+                    Calculate
+                </button>
             </div>
-        </FormProvider>
+        </ExchangeContext.Provider>
     );
 };
 

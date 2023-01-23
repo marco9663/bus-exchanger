@@ -21,6 +21,11 @@ export const toBound: Record<KBMBoundType, typeof INBOUND | typeof OUTBOUND> = {
     I: INBOUND,
 };
 
+export const toBoundSF: Record<KMBDirection, KBMBoundType> = {
+    [OUTBOUND]: O,
+    [INBOUND]: I,
+};
+
 export const boundMap = (
     bound: KBMBoundType | typeof INBOUND | typeof OUTBOUND,
 ): KBMBoundType | typeof INBOUND | typeof OUTBOUND => {
