@@ -66,6 +66,7 @@ export const ExchangeSummary: FC<ExchangeSummaryProps> = ({ exchangeData }) => {
                     </div>
                 </Fragment>
             ))}
+            <div className="text-sm">*班次時間為到達轉車站之時間</div>
         </div>
     );
 };

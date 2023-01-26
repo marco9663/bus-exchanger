@@ -1,5 +1,5 @@
 import { FC, Fragment } from "react";
-import { KMBDirection, getRoute, getStop } from "@apis/kmb";
+import { KMBDirection, getRoute, getStop, getStopWithCache } from "@apis/kmb";
 
 import { Loader } from "@mantine/core";
 import Loading from "pages/loading";
@@ -12,10 +12,10 @@ export type BusStopProps = {
 export const BusStop: FC<BusStopProps> = ({ stop_id }) => {
     const { data, isLoading } = useQuery({
         queryKey: ["stop", stop_id],
-        queryFn: () => getStop(stop_id),
+        queryFn: () => getStopWithCache(stop_id),
     });
     if (isLoading) return <Loading />;
-    return <Fragment>{data?.data.name_tc}</Fragment>;
+    return <Fragment>{data?.name_tc}</Fragment>;
 };
 
 export type RouteProps = {

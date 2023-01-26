@@ -123,6 +123,14 @@ export const getStop = async (
     return await res.json();
 };
 
+export const getStopWithCache = async (stop_id: string): Promise<KMBStop> => {
+    const cachedDate = await db.kmbStopTable.get(stop_id);
+    if (cachedDate) return cachedDate;
+    const data = await getStop(stop_id);
+    await db.kmbStopTable.add(data.data);
+    return data.data;
+};
+
 export type KMBGetRouteETAParamType = {
     route: string;
     service_type: string;

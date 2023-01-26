@@ -1,4 +1,4 @@
-import { KMBDirection, KMBRouteStop, getStop } from "./index";
+import { KMBDirection, KMBRouteStop, getStop, getStopWithCache } from "./index";
 
 import { getRouteStop } from "@apis/kmb";
 import { db } from "../../../db";
@@ -31,7 +31,7 @@ export const getRouteStopWithName = async (
             });
             continue;
         }
-        const { data } = await getStop(stop.stop);
+        const data = await getStopWithCache(stop.stop);
         newStops.push({
             ...stop,
             name_en: data.name_en,

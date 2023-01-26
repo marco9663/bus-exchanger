@@ -99,7 +99,7 @@ const Exchange2: FC = () => {
     });
 
     const { data: toRouteList } = useQuery({
-        queryKey: ["routeListETA"],
+        queryKey: ["routeListETA", selectedFrom, exchangeAt],
         queryFn: async () => {
             console.log("trigger route ETA query");
             const data = await getStopETA(exchangeAt!.value);
@@ -179,7 +179,11 @@ const Exchange2: FC = () => {
                 <div />
                 <div className="justify-self-center">Exchange</div>
                 <div className="justify-self-end">
-                    <HistoryDrawer setExchangeAt={setExchangeAt} setSelectedFrom={setSelectedFrom} setSelectedTo={setSelectedTo}/>
+                    <HistoryDrawer
+                        setExchangeAt={setExchangeAt}
+                        setSelectedFrom={setSelectedFrom}
+                        setSelectedTo={setSelectedTo}
+                    />
                 </div>
             </div>
             <div className="h-[calc(100vh-3rem-3rem)] overflow-y-auto flex flex-col gap-2">
@@ -224,7 +228,9 @@ const Exchange2: FC = () => {
                     </div>
 
                     <Button onClick={handleCalculate}>Calculate</Button>
-                    <Button onClick={saveExchange} variant="outline">Save</Button>
+                    <Button onClick={saveExchange} variant="outline">
+                        Save
+                    </Button>
                 </div>
                 {exchangeData && (
                     <ExchangeSummary exchangeData={exchangeData} />
