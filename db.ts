@@ -1,5 +1,6 @@
 import Dexie, { Table } from "dexie";
 import { KMBRouteStop, KMBRouteType, KMBStop } from "@apis";
+import { RouteOption, StopOptions } from "@components/widget/exchange/types";
 
 export interface KMBRouteTable extends KMBRouteType {
     id?: number;
@@ -20,6 +21,13 @@ export interface Hash {
     value: string;
 }
 
+export interface SavedExchange {
+    id?: number;
+    from?: RouteOption;
+    to?: RouteOption;
+    exchangeAt?: StopOptions;
+}
+
 export interface KMBStopTable extends KMBStop {}
 
 export class MySubClassedDexie extends Dexie {
@@ -29,6 +37,7 @@ export class MySubClassedDexie extends Dexie {
     kmbRouteStopTable!: Table<KMBRouteStopTable>;
     hash!: Table<Hash>;
     kmbStopTable!: Table<KMBStopTable>;
+    savedExchange!: Table<SavedExchange>;
     constructor() {
         super("myDatabase");
         this.version(1).stores({
@@ -37,6 +46,7 @@ export class MySubClassedDexie extends Dexie {
             // kmbRouteStopTable: "++id, route, stop , [route+bound+service_type]"
             hash: "id",
             kmbStopTable: "stop, name_tc, name_en",
+            savedExchange: "++id",
         });
     }
 }

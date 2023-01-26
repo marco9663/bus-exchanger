@@ -1,82 +1,71 @@
 import { useExchange } from "../../../../pages/exchange";
-import { ExchangeWidgetProps } from "@components/widget/exchange/types";
 import {
-    ComponentPropsWithoutRef,
-    FC,
-    forwardRef,
-    Fragment,
-    useState,
-} from "react";
+    ExchangeWidgetProps,
+    RouteOption,
+    StopOptions,
+} from "@components/widget/exchange/types";
+import { FC, Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDisclosure } from "@mantine/hooks";
-import { ActionIcon, Button, Modal, Select, SelectItem } from "@mantine/core";
 import {
-    boundMap,
+    ActionIcon,
+    Button,
+    Modal,
+    useMantineColorScheme,
+} from "@mantine/core";
+import {
     getRouteStopWithName,
     getStopETA,
-    INBOUND,
-    KBMBoundType,
-    KMBDirection,
-    KMBRouteType,
     KMBStopETA,
-    OUTBOUND,
     RouteStopWithName,
-    toBound, toBoundSF
+    toBound,
 } from "@apis";
 import { IconPencil } from "@tabler/icons";
+import Select from "react-select";
+import {
+    formRouteValue,
+    formStopValue,
+    styleConfig,
+} from "@components/widget/exchange/utils";
 
-interface ItemProps extends ComponentPropsWithoutRef<"div"> {
-    label: string;
-}
-
-const fillRouteList = (routeList?: KMBStopETA[]) =>
+const fillRouteList = (routeList?: KMBStopETA[]): RouteOption[] =>
     routeList?.map((r) => ({
-        ...r,
+        route: r.route,
+        service_type: r.service_type.toString(),
+        direction: toBound[r.dir],
         label: `${r.route} 住${r.dest_tc} ${r.service_type}`,
         value: `${r.route}-${toBound[r.dir]}-${r.service_type}`,
+        route_dest: r.dest_tc,
     })) || [];
 
-const fillRouteStop = (routeStop?: RouteStopWithName[]) =>
+const fillRouteStop = (routeStop?: RouteStopWithName[]): StopOptions[] =>
     routeStop?.map((s) => ({ ...s, label: s.name_tc, value: s.stop })) || [];
 
-const SelectItem2 = forwardRef<HTMLDivElement, ItemProps>(
-    ({ label, ...others }: ItemProps, ref) => (
-        <div ref={ref} {...others}>
-            <div>{label}</div>
-        </div>
-    ),
-);
-const SelectStopItem = forwardRef<HTMLDivElement, ItemProps>(
-    ({ label, ...others }: ItemProps, ref) => (
-        <div ref={ref} {...others}>
-            <div>{label}</div>
-        </div>
-    ),
-);
-
 export const ExchangeRouteWidget: FC<ExchangeWidgetProps> = ({ index }) => {
+    const { colorScheme } = useMantineColorScheme();
     const { exchanges, handlers } = useExchange();
     const [opened, { close, open }] = useDisclosure(false);
-    const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
-    const [selectedStop, setSelectedStop] = useState<string | null>(null);
+    const [selectedRoute, setSelectedRoute] = useState<RouteOption>(
+        formRouteValue(exchanges[index]),
+    );
+    const [selectedStop, setSelectedStop] = useState<StopOptions>(
+        formStopValue(exchanges[index]),
+    );
 
     const previousRoute = exchanges[index - 1];
 
     const handleSave = () => {
         console.log(selectedRoute, selectedStop);
-        if (selectedRoute?.split("-").length !== 3 || !selectedStop) {
-            return;
-        }
-        const [route, bound, service_type] = selectedRoute?.split("-");
-        const data = {
-            route_id: selectedRoute!,
-            route: route,
-            service_type: service_type,
-            direction: bound,
-            exchange_stop_id: selectedStop,
-        };
-        console.log(data);
-        handlers.setItem(index, data as any);
+        if (!selectedRoute || !selectedStop) return;
+        handlers.setItem(index, {
+            route_id: selectedRoute.value,
+            route: selectedRoute.route,
+            service_type: selectedRoute.service_type,
+            direction: selectedRoute.direction,
+            exchange_stop_id: selectedStop.value,
+            route_dest: selectedRoute.route_dest,
+            exchange_stop_name: selectedStop.label,
+        });
         close();
     };
 
@@ -93,18 +82,20 @@ export const ExchangeRouteWidget: FC<ExchangeWidgetProps> = ({ index }) => {
     });
 
     const { data: stopList } = useQuery({
-        queryKey: ["routeStop", selectedRoute],
+        queryKey: ["routeStop", selectedRoute ? selectedRoute.value : ""],
         queryFn: async () => {
             console.log("trigger Stop Query");
-            if (selectedRoute?.split("-").length !== 3) {
-                return [];
-            }
-            const [route, bound, service_type] = selectedRoute?.split("-");
-            console.log(route, bound, service_type);
+            if (
+                !selectedRoute ||
+                !selectedRoute.route ||
+                !selectedRoute.service_type ||
+                !selectedRoute.direction
+            )
+                return null;
             return await getRouteStopWithName({
-                route,
-                service_type,
-                direction: bound as any,
+                route: selectedRoute.route,
+                service_type: selectedRoute.service_type,
+                direction: selectedRoute.direction,
             });
         },
         enabled: !!selectedRoute,
@@ -118,23 +109,21 @@ export const ExchangeRouteWidget: FC<ExchangeWidgetProps> = ({ index }) => {
                 title="Find Route and Station for exchange"
             >
                 <Select
-                    label="Exchange Route"
-                    placeholder="Pick one Exchange Route"
-                    itemComponent={SelectItem2}
-                    data={fillRouteList(routeList)}
-                    maxDropdownHeight={400}
+                    styles={styleConfig(colorScheme)}
                     value={selectedRoute}
-                    onChange={setSelectedRoute}
+                    onChange={(newValue) =>
+                        newValue && setSelectedRoute(newValue)
+                    }
+                    options={fillRouteList(routeList)}
                 />
 
                 <Select
-                    label="Stop"
-                    placeholder="Pick one"
-                    itemComponent={SelectStopItem}
-                    data={fillRouteStop(stopList)}
-                    maxDropdownHeight={400}
+                    styles={styleConfig(colorScheme)}
                     value={selectedStop}
-                    onChange={setSelectedStop}
+                    onChange={(newValue) =>
+                        newValue && setSelectedStop(newValue)
+                    }
+                    options={fillRouteStop(stopList || [])}
                 />
                 <div className="flex justify-center mt-4">
                     <Button onClick={handleSave}>Save</Button>

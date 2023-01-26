@@ -145,8 +145,16 @@ export type KMBRouteETA = {
     dest_tc: string;
     dest_sc: string;
     dest_en: string;
-    eta_seq: number; // 1
-    eta: string; //"2023-01-15T14:25:53+08:00"
+    // 1
+    eta_seq: number;
+    /*
+     * The timestamp of the next ETA
+     *
+     * Date time with the time zone in ISO 8601 format.
+     *
+     * Example: "2022-11-29T15:48:00+08:00"
+     * */
+    eta: string;
     rmk_tc: KMBRMK;
     rmk_sc: KMBRMK;
     rmk_en: KMBRMK;
@@ -166,6 +174,20 @@ export const getRouteETA = async ({
         defaultOptions,
     );
     return await res.json();
+};
+
+export type KMBGetRouteETADirParamType = KMBGetRouteETAParamType & {
+    direction: KMBDirection;
+};
+
+export const getRouteETADir = async ({
+    route,
+    service_type,
+    direction,
+}: KMBGetRouteETADirParamType): Promise<KMBRouteETA[]> => {
+    const dir = toBoundSF[direction];
+    const data = await getRouteETA({ route, service_type });
+    return data.data.filter((d) => d.dir === dir);
 };
 
 export type KMBStopETA = {

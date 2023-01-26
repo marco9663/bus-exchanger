@@ -211,3 +211,5 @@ const ExchangeWidget: FC<ExchangeWidgetProps> = ({ index }) => {
 };
 
 export default ExchangeWidget;
+export { ExchangeData } from "@components/widget/exchange/types";
+export { ExchangeDataExchange } from "@components/widget/exchange/types";

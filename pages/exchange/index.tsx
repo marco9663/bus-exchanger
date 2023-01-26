@@ -8,7 +8,14 @@ import {
     useMemo,
     useState,
 } from "react";
-import { INBOUND, OUTBOUND } from "@apis/kmb";
+import {
+    getRouteETA,
+    getRouteETADir,
+    getStopETA,
+    INBOUND,
+    OUTBOUND,
+    toBound,
+} from "@apis/kmb";
 
 import { ActionIcon } from "@mantine/core";
 import ExchangeWidget from "@components/widget";
@@ -24,6 +31,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useId, useListState, UseListStateHandlers } from "@mantine/hooks";
 import { FirstRouteWidget } from "@components/widget/exchange/FirstRouteWidget";
 import { ExchangeRouteWidget } from "@components/widget/exchange/ExchangeRouteWidget";
+import { Simulate } from "react-dom/test-utils";
+import drag = Simulate.drag;
+import { findNextBus } from "@utils/exchange";
 
 // type QueryJSON = {
 //     route: string;
@@ -46,6 +56,8 @@ const QueryJSONSchema = z.array(
         direction: z.enum([INBOUND, OUTBOUND]),
         service_type: z.string(),
         exchange_stop_id: z.string().optional(),
+        route_dest: z.string(),
+        exchange_stop_name: z.string(),
     }),
 );
 export type QueryJSON = z.infer<typeof QueryJSONSchema>;
@@ -70,6 +82,8 @@ const defaultExchange: QueryJSON = [
         direction: INBOUND,
         service_type: "",
         exchange_stop_id: "",
+        exchange_stop_name: "",
+        route_dest: "",
     },
 ];
 
@@ -80,6 +94,32 @@ const Exchange: FC = () => {
     const router = useRouter();
     const { json } = router.query as QueryParam;
     const [exchanges, handlers] = useListState<QueryJSON[0]>([]);
+    const [summary, summaryHandlers] = useListState([]);
+
+    const handleCalculate = async () => {
+        console.log(exchanges);
+        if (!exchanges || exchanges[0].exchange_stop_id) return;
+        const exchangeAt = exchanges[0].exchange_stop_id!;
+        const fromRoute = {
+            route: exchanges[0].route,
+            service_type: exchanges[0].service_type,
+            direction: exchanges[0].direction,
+        };
+        const toRoute = {
+            route: exchanges[1].route,
+            service_type: exchanges[1].service_type,
+            direction: exchanges[1].direction,
+        };
+        const stopETA = await getStopETA(exchangeAt);
+        const stopFromRouteETA = stopETA.data.filter(
+            (d) =>
+                d.route === fromRoute.route &&
+                toBound[d.dir] === fromRoute.direction &&
+                d.service_type.toString() === fromRoute.service_type,
+        );
+        console.log(stopFromRouteETA);
+    };
+
     const _ = useQuery({
         queryKey: ["getRawExchange"],
         queryFn: () => {
@@ -112,7 +152,6 @@ const Exchange: FC = () => {
                     {exchanges.map(
                         (
                             {
-                                route_id,
                                 direction,
                                 route,
                                 service_type,
@@ -121,7 +160,11 @@ const Exchange: FC = () => {
                             index,
                         ) => {
                             return (
-                                <div key={useId(route_id)}>
+                                <div
+                                    key={useId(
+                                        `${index}-${route}-${direction}-${exchange_stop_id}`,
+                                    )}
+                                >
                                     <div className="bg-slate-800 p-4 rounded-lg w-72 h-20 flex justify-between">
                                         <Route
                                             direction={
@@ -132,7 +175,7 @@ const Exchange: FC = () => {
                                                 exchanges[index].service_type
                                             }
                                         />
-                                        <div className='flex'>
+                                        <div className="flex">
                                             {index === 0 ? (
                                                 <FirstRouteWidget
                                                     index={index}
@@ -147,7 +190,7 @@ const Exchange: FC = () => {
                                                     handlers.remove(index)
                                                 }
                                             >
-                                                <IconTrashX color="#FF1517"/>
+                                                <IconTrashX color="#FF1517" />
                                             </ActionIcon>
                                         </div>
                                     </div>
@@ -184,12 +227,17 @@ const Exchange: FC = () => {
                     )}
                 </div>
                 <button
-                    onClick={() => {
-                        console.log(exchanges);
+                    onClick={async () => {
+                        await handleCalculate();
                     }}
                 >
                     Calculate
                 </button>
+                <div>
+                    {summary.map((s) => (
+                        <div>{s}</div>
+                    ))}
+                </div>
             </div>
         </ExchangeContext.Provider>
     );

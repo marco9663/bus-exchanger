@@ -11,7 +11,7 @@ const buttons = [
     },
     {
         icon: <IconArrowsExchange2 size={36} />,
-        path: "/exchange",
+        path: "/exchange2",
     },
     {
         icon: <IconSettings size={36} />,
