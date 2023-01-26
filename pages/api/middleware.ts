@@ -10,12 +10,12 @@ export type Cache = {
 let cachedDb: Db;
 const client = new MongoClient(process.env.APP_MONGO_DB!);
 
-export interface NextApiRequestExtended<T = void> extends NextApiRequest {
+export interface NextApiRequestExtended extends NextApiRequest {
     db: Db;
     dbClient: MongoClient;
 }
 
-async function database(
+export async function middleware(
     req: NextApiRequestExtended,
     res: NextApiResponse,
     next: any,
@@ -30,8 +30,9 @@ async function database(
         const db = await client.db("public");
 
         cachedDb = db;
+        console.log(cachedDb.listCollections());
         req.dbClient = client;
-        req.db = client.db("MCT");
+        req.db = cachedDb;
         return next();
     } catch (error) {
         console.log("ERROR aquiring DB Connection!");
@@ -40,4 +41,7 @@ async function database(
     }
 }
 
-export default database;
+export default middleware;
+export const config = {
+    matcher: "/api/:function*",
+};

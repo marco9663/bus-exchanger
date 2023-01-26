@@ -19,6 +19,7 @@ export interface KMBRouteStopTable extends KMBRouteStop {
 export interface Hash {
     id: string;
     value: string;
+    updateAt: Date;
 }
 
 export interface SavedExchange {
@@ -29,6 +30,8 @@ export interface SavedExchange {
 }
 
 export interface KMBStopTable extends KMBStop {}
+
+export const routeListHashKey = "allRoute";
 
 export class MySubClassedDexie extends Dexie {
     // 'friends' is added by dexie when declaring the stores()

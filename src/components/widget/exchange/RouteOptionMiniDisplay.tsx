@@ -6,7 +6,6 @@ import { toBoundSF } from "@apis";
 
 export type RouteOptionMiniDisplayProps = {
     routeOption: RouteOption;
-
 };
 
 export const RouteOptionMiniDisplay: FC<RouteOptionMiniDisplayProps> = ({

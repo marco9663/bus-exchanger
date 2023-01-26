@@ -1,12 +1,11 @@
 import React, { Dispatch, FC, Fragment, SetStateAction } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { Drawer, UnstyledButton } from "@mantine/core";
-import { IconHistory, IconX } from "@tabler/icons";
+import { IconArrowBigRight, IconHistory, IconX } from "@tabler/icons";
 import { useQuery } from "@tanstack/react-query";
 import { db, SavedExchange } from "../../../../db";
 import { RouteOptionMiniDisplay } from "@components/widget/exchange/RouteOptionMiniDisplay";
 import { RouteOption, StopOptions } from "@components/widget/exchange/types";
-import { IconArrowBigRight } from "@tabler/icons";
 
 export type HistoryDrawerProps = {
     setSelectedFrom: Dispatch<SetStateAction<RouteOption | undefined>>;
