@@ -1,133 +1,241 @@
-import { BusStop, Route } from "@components/kmb";
-import { FC, useEffect } from "react";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { INBOUND, OUTBOUND } from "@apis/kmb";
+import { FC, useState } from "react";
+import {
+    getRouteStopWithName,
+    getStopETA,
+    KMBDirection,
+    KMBStopETA,
+    RouteStopWithName,
+    toBound,
+} from "@apis";
+import { useQuery } from "@tanstack/react-query";
+import { db, KMBRouteTable } from "../../db";
+import Select from "react-select";
+import { styleConfig } from "@components/widget/exchange/utils";
+import { Button, useMantineColorScheme } from "@mantine/core";
+import { ExchangeData, StopOptions } from "@components/widget/exchange/types";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { ExchangeSummary } from "@components/widget/exchange/ExchangeSummary";
+import { HistoryDrawer } from "@components/widget/exchange/HistoryDrawer";
 
-import { ActionIcon } from "@mantine/core";
-import ExchangeWidget from "@components/widget";
-import { IconPlus } from "@tabler/icons";
-import { useRouter } from "next/router";
-import { z } from "zod";
+dayjs.extend(relativeTime);
 
-// type QueryJSON = {
-//     route: string;
-//     direction: KMBDirection;
-//     service_type: string;
-//     exchange_stop_id?: string;
-// };
+interface RouteOption {
+    route: string;
+    service_type: string;
+    direction: KMBDirection;
+    label: string;
+    value: string;
+}
 
-type QueryParam = {
-    json: string;
-    // route: string;
-    // direction: KMBDirection;
-    // service_type: string;
-};
+const fillFromRouteList = (routeList?: KMBRouteTable[]): RouteOption[] =>
+    routeList?.map((r) => ({
+        route: r.route,
+        service_type: r.service_type,
+        direction: toBound[r.bound],
+        label: `${r.route} 住${r.dest_tc} ${r.service_type}`,
+        value: `${r.route}-${toBound[r.bound]}-${r.service_type}`,
+    })) || [];
 
-const QueryJSONSchema = z.array(
-    z.object({
-        route: z.string(),
-        direction: z.enum([INBOUND, OUTBOUND]),
-        service_type: z.string(),
-        exchange_stop_id: z.string().optional(),
-    }),
-);
-export type QueryJSON = z.infer<typeof QueryJSONSchema>;
+const fillToRouteList = (routeList?: KMBStopETA[]): RouteOption[] =>
+    routeList?.map((r) => ({
+        route: r.route,
+        service_type: r.service_type.toString(),
+        direction: toBound[r.dir],
+        label: `${r.route} 住${r.dest_tc} ${r.service_type}`,
+        value: `${r.route}-${toBound[r.dir]}-${r.service_type}`,
+        route_dest: r.dest_tc,
+    })) || [];
 
-const defaultForm: Record<string, QueryJSON> = {
-    data: [
-        {
-            route: "",
-            direction: INBOUND,
-            service_type: "",
-            exchange_stop_id: "",
-        },
-    ],
+const fillRouteStop = (routeStop?: RouteStopWithName[]): StopOptions[] =>
+    routeStop?.map((s, i) => ({
+        ...s,
+        label: `${i}. ` + s.name_tc,
+        value: s.stop,
+    })) || [];
+
+type ExchangeProps = {
+    from?: RouteOption;
+    to?: RouteOption;
+    exchange?: StopOptions;
 };
 
 const Exchange: FC = () => {
-    const router = useRouter();
-    const { json } = router.query as QueryParam;
-    const rawExchange: QueryJSON[] = json
-        ? JSON.parse(decodeURIComponent(json || ""))
-        : {};
+    const { colorScheme } = useMantineColorScheme();
+    const [selectedFrom, setSelectedFrom] = useState<RouteOption>();
+    const [selectedTo, setSelectedTo] = useState<RouteOption>();
+    // exchange Stop ID
+    const [exchangeAt, setExchangeAt] = useState<StopOptions>();
 
-    useEffect(() => {
-        QueryJSONSchema.safeParse(rawExchange);
-    }, [rawExchange]);
+    const [exchangeData, setExchangeData] = useState<ExchangeData[]>();
 
-    const methods = useForm<{
-        data: QueryJSON;
-    }>({
-        defaultValues: QueryJSONSchema.safeParse(rawExchange).success
-            ? { data: rawExchange as unknown as QueryJSON }
-            : defaultForm,
+    const { data: routeList } = useQuery({
+        queryKey: ["routeList"],
+        queryFn: async () => {
+            console.log("trigger route list search");
+            return db.kmbRouteTable.toArray();
+        },
     });
-    const { control, handleSubmit, reset, watch } = methods;
 
-    const { fields, append } = useFieldArray({ control, name: "data" });
+    const { data: stopList } = useQuery({
+        queryKey: ["routeStop", selectedFrom ? selectedFrom.value : ""],
+        queryFn: async () => {
+            console.log("trigger Stop Query");
+            if (
+                !selectedFrom ||
+                !selectedFrom.route ||
+                !selectedFrom.service_type ||
+                !selectedFrom.direction
+            )
+                return null;
+            return await getRouteStopWithName({
+                route: selectedFrom.route,
+                service_type: selectedFrom.service_type,
+                direction: selectedFrom.direction,
+            });
+        },
+        enabled: !!selectedFrom,
+    });
+
+    const { data: toRouteList } = useQuery({
+        queryKey: ["routeListETA", selectedFrom, exchangeAt],
+        queryFn: async () => {
+            console.log("trigger route ETA query");
+            const data = await getStopETA(exchangeAt!.value);
+            return data.data;
+        },
+        enabled: !!selectedFrom && !!exchangeAt,
+    });
+
+    const handleCalculate = async () => {
+        if (!exchangeAt) return;
+        const data = await getStopETA(exchangeAt.value);
+        const filteredData = data.data.filter(
+            (d) =>
+                (d.route == selectedFrom?.route &&
+                    d.service_type.toString() === selectedFrom?.service_type &&
+                    toBound[d.dir] === selectedFrom?.direction) ||
+                (d.route == selectedTo?.route &&
+                    d.service_type.toString() === selectedTo?.service_type &&
+                    toBound[d.dir] === selectedTo?.direction),
+        );
+
+        const fromRouteETA = filteredData
+            .filter(
+                (d) =>
+                    d.route == selectedFrom?.route &&
+                    d.service_type.toString() === selectedFrom?.service_type &&
+                    toBound[d.dir] === selectedFrom?.direction,
+            )
+            .sort((a, b) => (dayjs(a.eta).isAfter(b.eta) ? 1 : -1));
+
+        const toRouteETA = filteredData
+            .filter(
+                (d) =>
+                    d.route == selectedTo?.route &&
+                    d.service_type.toString() === selectedTo?.service_type &&
+                    toBound[d.dir] === selectedTo?.direction,
+            )
+            .sort((a, b) => (dayjs(a.eta).isAfter(b.eta) ? 1 : -1));
+
+        console.log(fromRouteETA, toRouteETA);
+
+        const res = fromRouteETA.map((fETA) => {
+            return {
+                arriveAt: dayjs(fETA.eta),
+                remark: fETA["rmk_tc"],
+                exchange: toRouteETA.map((tETA) => {
+                    // early return if To bus arrive after the From bus
+                    if (
+                        !tETA.eta ||
+                        !fETA.eta ||
+                        dayjs(tETA.eta).isBefore(dayjs(fETA.eta))
+                    )
+                        return { active: false };
+                    return {
+                        active: true,
+                        arriveAt: dayjs(tETA.eta),
+                    };
+                }),
+            };
+        });
+        console.log(res);
+        setExchangeData(res);
+    };
+
+    const saveExchange = async () => {
+        if (!selectedFrom || !selectedTo || !exchangeAt) return;
+        await db.savedExchange.add({
+            from: selectedFrom,
+            to: selectedTo,
+            exchangeAt: exchangeAt,
+        });
+    };
 
     return (
-        <FormProvider {...methods}>
-            <div className="rest-height">
-                <div className="flex justify-center items-center font-bold text-xl h-12 bg-blue-300 dark:bg-blue-600">
-                    Exchange
-                </div>
-                <div className="flex justify-center items-center py-4 flex-col gap-4">
-                    {fields.map(
-                        (
-                            {
-                                id,
-                                direction,
-                                route,
-                                service_type,
-                                exchange_stop_id,
-                            },
-                            index,
-                        ) => {
-                            return (
-                                <div key={`${id}`}>
-                                    <div className="bg-slate-800 p-4 rounded-lg w-72 h-32 flex justify-between">
-                                        <Route
-                                            direction={watch(
-                                                `data.${index}.direction`,
-                                            )}
-                                            route={watch(`data.${index}.route`)}
-                                            service_type={watch(
-                                                `data.${index}.service_type`,
-                                            )}
-                                        />
-                                        <ExchangeWidget index={index} />
-                                    </div>
-                                    {watch(
-                                        `data.${index}.exchange_stop_id`,
-                                    ) && (
-                                        <BusStop
-                                            stop_id={
-                                                watch(
-                                                    `data.${index}.exchange_stop_id`,
-                                                ) as string
-                                            }
-                                        />
-                                    )}
-
-                                    {fields.length === index + 1 && (
-                                        <div className="flex justify-center">
-                                            <ActionIcon
-                                                onClick={() =>
-                                                    append(defaultForm.data)
-                                                }
-                                            >
-                                                <IconPlus />
-                                            </ActionIcon>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        },
-                    )}
+        <div className="rest-height">
+            <div className="grid grid-cols-3 items-center px-4 font-bold text-xl h-12 bg-blue-300 dark:bg-blue-600">
+                <div />
+                <div className="justify-self-center">Exchange</div>
+                <div className="justify-self-end">
+                    <HistoryDrawer
+                        setExchangeAt={setExchangeAt}
+                        setSelectedFrom={setSelectedFrom}
+                        setSelectedTo={setSelectedTo}
+                    />
                 </div>
             </div>
-        </FormProvider>
+            <div className="h-[calc(100vh-3rem-3rem)] overflow-y-auto flex flex-col gap-2">
+                <div className="flex flex-col justify-center gap-6 mt-4 px-4">
+                    <div>
+                        <div>From Route</div>
+                        <Select
+                            styles={styleConfig(colorScheme)}
+                            value={selectedFrom}
+                            onChange={(newValue: RouteOption) => {
+                                newValue && setSelectedFrom(newValue);
+                                setExchangeAt(undefined);
+                                setSelectedTo(undefined);
+                            }}
+                            options={fillFromRouteList(routeList)}
+                        />
+                    </div>
+
+                    <div>
+                        <div>Exchange At</div>
+                        <Select
+                            styles={styleConfig(colorScheme)}
+                            value={exchangeAt}
+                            onChange={(newValue: StopOptions) => {
+                                newValue && setExchangeAt(newValue);
+                                setSelectedTo(undefined);
+                            }}
+                            options={fillRouteStop(stopList || [])}
+                        />
+                    </div>
+
+                    <div>
+                        <div>To Route</div>
+                        <Select
+                            styles={styleConfig(colorScheme)}
+                            value={selectedTo}
+                            onChange={(newValue: RouteOption) =>
+                                newValue && setSelectedTo(newValue)
+                            }
+                            options={fillToRouteList(toRouteList)}
+                        />
+                    </div>
+
+                    <Button onClick={handleCalculate}>Calculate</Button>
+                    <Button onClick={saveExchange} variant="outline">
+                        Save
+                    </Button>
+                </div>
+                {exchangeData && (
+                    <ExchangeSummary exchangeData={exchangeData} />
+                )}
+            </div>
+        </div>
     );
 };
 

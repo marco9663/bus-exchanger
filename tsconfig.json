@@ -51,6 +51,12 @@
       ],
       "@apis/*": [
         "src/apis/*"
+      ],
+      "@utils": [
+        "src/utils"
+      ],
+      "@utils/*": [
+        "src/utils/*"
       ]
     },
     "incremental": true

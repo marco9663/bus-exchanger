@@ -1,5 +1,5 @@
 import { FC, Fragment } from "react";
-import { KMBDirection, getRoute, getStop } from "@apis/kmb";
+import { KMBDirection, getRoute, getStop, getStopWithCache } from "@apis/kmb";
 
 import { Loader } from "@mantine/core";
 import Loading from "pages/loading";
@@ -12,10 +12,10 @@ export type BusStopProps = {
 export const BusStop: FC<BusStopProps> = ({ stop_id }) => {
     const { data, isLoading } = useQuery({
         queryKey: ["stop", stop_id],
-        queryFn: () => getStop(stop_id),
+        queryFn: () => getStopWithCache(stop_id),
     });
     if (isLoading) return <Loading />;
-    return <Fragment>{data?.data.name_tc}</Fragment>;
+    return <Fragment>{data?.name_tc}</Fragment>;
 };
 
 export type RouteProps = {
@@ -27,19 +27,31 @@ export type RouteProps = {
 export const Route: FC<RouteProps> = ({ route, direction, service_type }) => {
     const { data, isLoading } = useQuery({
         queryKey: ["route", route, direction, service_type],
-        queryFn: () => getRoute({ route, direction, service_type }),
+        queryFn: async () => {
+            return await getRoute({ route, direction, service_type });
+        },
         enabled: !!route && !!direction && !!service_type,
     });
-    if (isLoading)
-        return (
-            <>
-                <Loader />
-            </>
-        );
+    // if (isLoading)
+    //     return (
+    //         <>
+    //             <Loader />
+    //         </>
+    //     );
     return (
-        <div className="flex gap-2">
-            <div>{data?.data.route}</div>
-            <div>住{data?.data.dest_tc}</div>
+        <div className="grid grid-cols-2 gap-x-2">
+            <div className="text-sm font-bold">路線</div>
+            <div className="text-sm font-bold">目的地</div>
+            {isLoading ? (
+                <div className="text-neutral-500">未選擇</div>
+            ) : (
+                data && data.data && <div>{route}</div>
+            )}
+            {isLoading ? (
+                <div className="text-neutral-500">未選擇</div>
+            ) : (
+                data && data.data && <div>住{data?.data.dest_tc}</div>
+            )}
         </div>
     );
 };
