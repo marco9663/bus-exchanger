@@ -1,7 +1,6 @@
-import { KMBDirection, KMBRouteStop, getStop, getStopWithCache } from "./index";
+import { getStopWithCache, KMBDirection, KMBRouteStop } from "./index";
 
 import { getRouteStop } from "@apis/kmb";
-import { db } from "../../../db";
 
 export type getRouteStopWithNameParam = {
     route: string;
@@ -19,33 +18,13 @@ export const getRouteStopWithName = async (
     param: getRouteStopWithNameParam,
 ): Promise<RouteStopWithName[]> => {
     const stops = await getRouteStop(param);
-    const newStops: RouteStopWithName[] = [];
-    for (const stop of stops.data) {
-        const found = await db.kmbStopTable.get(stop.stop);
-        if (found) {
-            newStops.push({
-                ...stop,
-                name_en: found.name_en,
-                name_sc: found.name_sc,
-                name_tc: found.name_tc,
-            });
-            continue;
-        }
-        const data = await getStopWithCache(stop.stop);
-        newStops.push({
-            ...stop,
-            name_en: data.name_en,
-            name_sc: data.name_sc,
-            name_tc: data.name_tc,
-        });
-        await db.kmbStopTable.add({
-            stop: stop.stop,
-            name_en: data.name_en,
-            name_sc: data.name_sc,
-            name_tc: data.name_tc,
-            lat: data.lat,
-            long: data.long,
-        });
-    }
-    return newStops;
+    const promises = stops.data.map((stop) => getStopWithCache(stop.stop));
+    // order is preserved
+    const stopsWithCache = await Promise.all(promises);
+    return stops.data.map((stop, i) => ({
+        ...stop,
+        name_en: stopsWithCache[i].name_en,
+        name_sc: stopsWithCache[i].name_sc,
+        name_tc: stopsWithCache[i].name_tc,
+    }));
 };
